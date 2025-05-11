@@ -1,0 +1,27 @@
+[http]
+    # Redirect to https
+    [http.middlewares]
+      [http.middlewares.https-redirect.redirectScheme]
+        scheme = "https"
+
+    [http.routers]
+       [http.routers.beachist-router]
+          rule = "Host(`hetzner-test.sbz.beachist.app`) && (PathPrefix(`/api`) || PathPrefix(`/auth`))"
+          service = "beachist"
+          entryPoints = ["web-secure"]
+       [http.routers.beachist-router.tls]
+          certResolver = "le"
+       [http.routers.beachist-frontend-router]
+          rule = "Host(`hetzner-test.sbz.beachist.app`)"
+          service = "beachist-frontend"
+          entryPoints = ["web-secure"]
+       [http.routers.beachist-frontend-router.tls]
+          certResolver = "le"
+
+    [http.services]
+          [http.services.beachist.loadbalancer]
+            [[http.services.beachist.loadbalancer.servers]]
+              url = "http://127.0.0.1:8000"
+          [http.services.beachist-frontend.loadbalancer]
+            [[http.services.beachist-frontend.loadbalancer.servers]]
+              url = "http://127.0.0.1:8123"

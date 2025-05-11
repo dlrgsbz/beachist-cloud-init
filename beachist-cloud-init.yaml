@@ -1,0 +1,64 @@
+#cloud-config
+fqdn: hetzner-test.sbz.beachist.app
+hostname: beachist-hetzner-test
+locale: de_DE.UTF-8
+timezone: Europe/Berlin
+package_upgrade: true
+package_reboot_if_required: true
+users:
+  - name: tjark
+    groups: sudo
+    shell: /bin/bash
+    ssh-authorized-keys:
+      - ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBIvp7ppQle8twfR1KvrF0DcGNGrhAs+vS1TAzXntwKnokNEWp7Fh8KlvfYESFf+5+Frgf9EjZMafwZJSzv0mWDg=
+  - name: beachist
+    shell: /bin/false
+  - name: traefik
+    shell: /bin/false
+write_files:
+  - path: /etc/traefik/traefik.toml
+    source:
+      uri: https://raw.githubusercontent.com/dlrgsbz/beachist-cloud-init/refs/heads/main/traefik.toml
+    owner: traefik:traefik
+    defer: true
+  - path: /etc/traefik/traefik-dynamic.toml
+    source:
+      uri: https://raw.githubusercontent.com/dlrgsbz/beachist-cloud-init/refs/heads/main/traefik-dynamic.toml
+    owner: traefik:traefik
+    defer: true
+  - path: /etc/systemd/system/traefik.service
+    source:
+      uri: https://raw.githubusercontent.com/dlrgsbz/beachist-cloud-init/refs/heads/main/traefik.service
+    owner: root:root
+    defer: true
+runcmd:
+  # Install Traefik
+  - mkdir -p /tmp/traefik && cd /tmp/traefik
+  - wget https://github.com/traefik/traefik/releases/download/v3.4.0/traefik_v3.4.0_linux_arm64.tar.gz
+  - tar xzf traefik_v3.4.0_linux_arm64.tar.gz
+  - cp /tmp/traefik/traefik /usr/local/bin
+  - chown root:root /usr/local/bin/traefik
+  - chmod 755 /usr/local/bin/traefik
+  - setcap 'cap_net_bind_service=+ep' /usr/local/bin/traefik
+  - mkdir -p /etc/traefik/acme
+  - mkdir -p /etc/traefik/dynamic
+  - chmod 644 /etc/systemd/system/traefik.service
+  - systemctl daemon-reload
+  - systemctl enable traefik.service
+  - systemctl start traefik.service
+  - touch /var/log/traefik.log
+  - chown traefik:traefik /var/log/traefik.log
+
+  # Install poetry
+  - apt install pipx -y
+  - pipx ensurepath
+  - echo 'eval "$(register-python-argcomplete pipx)"' >> ~/.zshrc
+  - echo 'eval "$(register-python-argcomplete pipx)"' >> ~/.bashrc
+  - source ~/.bashrc
+  - pipx install poetry
+
+  # run all of this as user beachist
+  - git clone -b new-backend --single-branch https://github.com/dlrgsbz/beachist.git /opt/beachist
+  - cd /opt/beachist/new-backend
+  - poetry install --no-root
+  

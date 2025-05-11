@@ -1,0 +1,4 @@
+#!/bin/sh
+
+/usr/local/bin/dumpcerts /etc/traefik/acme/acme.json /etc/mosquitto/ssl
+chown -R mosquitto:mosquitto /etc/mosquitto/ssl

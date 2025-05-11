@@ -1,0 +1,12 @@
+#!/bin/bash -e
+
+sudo -u beachist bash<<'_'
+
+pipx install poetry
+git clone -b new-backend --single-branch https://github.com/dlrgsbz/beachist.git /opt/beachist
+cd /opt/beachist/new-backend
+
+/home/beachist/.local/bin/poetry install --no-root
+_
+
+systemctl start gunicorn.service

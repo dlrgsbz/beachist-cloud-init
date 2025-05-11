@@ -1,0 +1,25 @@
+[Unit]
+Description=gunicorn daemon
+After=network.target
+
+[Service]
+# gunicorn can let systemd know when it is ready
+Type=notify
+NotifyAccess=main
+# the specific user that our service will run as
+User=beachist
+Group=beachist
+# this user can be transiently created by systemd
+# DynamicUser=true
+RuntimeDirectory=gunicorn
+WorkingDirectory=/opt/beachist/new-backend/
+ExecStart=/home/beachist/.local/bin/poetry run gunicorn --bind 127.0.0.1:8000 -w 8 beachist.wsgi
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=5
+PrivateTmp=true
+# if your app does not need administrative capabilities, let systemd know
+# ProtectSystem=strict
+
+[Install]
+WantedBy=multi-user.target

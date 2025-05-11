@@ -1,0 +1,29 @@
+[log]
+  level = "DEBUG"
+  filePath = "/var/log/traefik.log"
+
+[providers]
+  [providers.file]
+    filename = "/etc/traefik/traefik-dynamic.toml"
+
+[api]
+  dashboard = true
+  debug = true
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":80"
+  [entryPoints.web-secure]
+    address = ":443"
+  [entryPoints.dashboard]
+    address = ":8080"
+
+[certificatesResolvers.le.acme]
+# todo: can i fetch this from some kind of secret?
+  email = "le@example.com"
+  storage = "/etc/traefik/acme/acme.json"
+#  caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
+
+  [certificatesResolvers.le.acme.httpChallenge]
+    # used during the challenge
+    entryPoint = "web"
